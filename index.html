@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>九标段阀井交工台账 - 五态施工状态（数据自动迁移版）</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+            color: #1e2a3e;
+        }
+        .dashboard-container {
+            max-width: 1900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+            padding: 20px 24px 32px 24px;
+        }
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0 0 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .sub {
+            color: #4a627a;
+            border-left: 4px solid #2c7da0;
+            padding-left: 14px;
+            margin: 8px 0 24px 0;
+            font-size: 0.9rem;
+        }
+        .legend-bar {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            background: #f8fafc;
+            border-radius: 40px;
+            padding: 8px 20px;
+            margin-bottom: 20px;
+            width: fit-content;
+            border: 1px solid #e2edf2;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status-filter-link {
+            text-decoration: underline;
+            cursor: pointer;
+            color: inherit;
+            transition: opacity 0.2s;
+        }
+        .status-filter-link:hover {
+            opacity: 0.7;
+            text-decoration: none;
+        }
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 40px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .legend-color.not-started { background-color: #e5e7eb; border: 1px solid #9ca3af; }
+        .legend-color.excavating { background-color: #f97316; border: 1px solid #c2410c; }
+        .legend-color.excavated { background-color: #fbbf24; border: 1px solid #d97706; }
+        .legend-color.sealing { background-color: #10b981; border: 1px solid #047857; }
+        .legend-color.sealed { background-color: #3b82f6; border: 1px solid #1e40af; }
+        
+        .filter-bar {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 16px;
+            border: 1px solid #e2edf2;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 130px;
+        }
+        .filter-group label {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .filter-select {
+            padding: 8px 12px;
+            border-radius: 40px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            font-size: 0.85rem;
+            cursor: pointer;
+            min-width: 140px;
+        }
+        .filter-input {
+            padding: 8px 12px;
+            border-radius: 40px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            font-size: 0.85rem;
+            width: 160px;
+        }
+        .filter-btn {
+            background: #eef2ff;
+            border: 1px solid #cbd5e1;
+            border-radius: 40px;
+            padding: 8px 16px;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.1s;
+            margin-top: 6px;
+        }
+        .filter-btn:hover { background: #e2e8f0; }
+        .action-btn {
+            background: #eef2ff;
+            border: 1px solid #cbd5e1;
+            border-radius: 40px;
+            padding: 8px 20px;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.1s;
+        }
+        .action-btn:hover { background: #e2e8f0; }
+        .reset-data-btn {
+            background: #fee2e2;
+            border-color: #fecaca;
+            color: #b91c1c;
+        }
+        .reset-data-btn:hover { background: #fecaca; }
+        .filter-info {
+            font-size: 0.75rem;
+            color: #4a627a;
+            background: #eef2ff;
+            padding: 4px 12px;
+            border-radius: 30px;
+            align-self: center;
+        }
+        .stats-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            margin-bottom: 32px;
+            background: #f8fafc;
+            border-radius: 24px;
+            padding: 20px;
+            align-items: center;
+        }
+        .cards {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            flex: 2;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 28px;
+            padding: 16px 28px;
+            min-width: 130px;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            border: 1px solid #e2edf2;
+        }
+        .stat-card .label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #5e7a93;
+        }
+        .stat-card .number {
+            font-size: 2.6rem;
+            font-weight: 800;
+            margin: 8px 0;
+            line-height: 1;
+        }
+        .stat-card.not-started .number { color: #4b5563; }
+        .stat-card.excavating .number { color: #c2410c; }
+        .stat-card.excavated .number { color: #b45309; }
+        .stat-card.sealing .number { color: #047857; }
+        .stat-card.sealed .number { color: #1e40af; }
+        .chart-wrapper {
+            flex: 1.2;
+            min-width: 260px;
+            background: white;
+            border-radius: 24px;
+            padding: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            border: 1px solid #e2edf2;
+        }
+        canvas { max-height: 200px; width: 100%; }
+        .table-wrapper {
+            border-radius: 20px;
+            border: 1px solid #e9eef3;
+            overflow-x: auto;
+            background: white;
+            margin-top: 8px;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            min-width: 1800px;
+        }
+        .data-table th {
+            background: #eef2f7;
+            color: #1e3a5f;
+            font-weight: 600;
+            padding: 12px 8px;
+            border-bottom: 1px solid #cbdde6;
+            position: sticky;
+            top: 0;
+            background-color: #eef2f7;
+            z-index: 10;
+        }
+        .data-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #e9edf2;
+            vertical-align: middle;
+        }
+        .data-table tr:hover { background-color: #fafcff; }
+        .status-select {
+            padding: 5px 8px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid #cbd5e1;
+            background-color: white;
+            cursor: pointer;
+            text-align: center;
+            width: 110px;
+        }
+        .status-select.not-started { background-color: #e5e7eb; color: #1f2937; border-color: #9ca3af; }
+        .status-select.excavating { background-color: #f97316; color: white; border-color: #c2410c; }
+        .status-select.excavated { background-color: #fbbf24; color: #78350f; border-color: #d97706; }
+        .status-select.sealing { background-color: #10b981; color: white; border-color: #047857; }
+        .status-select.sealed { background-color: #3b82f6; color: white; border-color: #1e40af; }
+        .seal-select, .team-select, .construction-select, .valve-status-select, .actuator-select, .consistency-select {
+            padding: 5px 8px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border: 1px solid #cbd5e1;
+            background-color: white;
+            cursor: pointer;
+            text-align: center;
+        }
+        .seal-select { width: 85px; }
+        .team-select { width: 105px; }
+        .construction-select { width: 85px; }
+        .valve-status-select { width: 95px; }
+        .actuator-select { width: 85px; }
+        .consistency-select { width: 100px; }
+        .old-num { color: #6c86a3; font-size: 0.75rem; }
+        footer {
+            margin-top: 24px;
+            font-size: 0.7rem;
+            text-align: center;
+            color: #7f8c9a;
+            border-top: 1px solid #e2edf2;
+            padding-top: 16px;
+        }
+        .badge-note {
+            background: #eef2ff;
+            border-radius: 30px;
+            padding: 4px 12px;
+            font-size: 0.7rem;
+        }
+        .save-indicator {
+            font-size: 0.7rem;
+            color: #2f855a;
+            background: #e0f2e9;
+            padding: 4px 12px;
+            border-radius: 30px;
+            margin-left: 10px;
+        }
+        .date-indicator {
+            font-size: 0.7rem;
+            background: #eef2ff;
+            padding: 4px 12px;
+            border-radius: 30px;
+            margin-left: 8px;
+            color: #2c7da0;
+            white-space: nowrap;
+            border: 1px solid #d4e2f0;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .data-ops {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+        }
+        @media (max-width: 780px) {
+            .filter-bar { align-items: stretch; }
+            .date-indicator { white-space: normal; margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+    <h1>
+        📋 九标段阀井交工台账
+        <span class="badge-note">🎨 高对比五态 · 自动迁移数据 · 编号跳转</span>
+    </h1>
+    <div class="sub">📍 北湖开发区 · 朝阳区 · 二道区 · 经开区 · 净月区 · 莲花山 · 汽开区 · 中韩合作区等 | 总计155座阀井</div>
+
+    <div class="legend-bar">
+        <span class="legend-item"><span class="legend-color not-started"></span> <a href="javascript:void(0)" class="status-filter-link" data-status="未施工">未施工</a></span>
+        <span class="legend-item"><span class="legend-color excavating"></span> <a href="javascript:void(0)" class="status-filter-link" data-status="开挖中">开挖中</a></span>
+        <span class="legend-item"><span class="legend-color excavated"></span> <a href="javascript:void(0)" class="status-filter-link" data-status="开挖完">开挖完</a></span>
+        <span class="legend-item"><span class="legend-color sealing"></span> <a href="javascript:void(0)" class="status-filter-link" data-status="封堵中">封堵中</a></span>
+        <span class="legend-item"><span class="legend-color sealed"></span> <a href="javascript:void(0)" class="status-filter-link" data-status="封堵完">封堵完</a></span>
+        <span class="legend-item">| <a href="javascript:void(0)" class="status-filter-link" data-status="all">全部</a></span>
+        <span style="font-size:0.7rem; color:#6c86a3;">※ 点击状态名称筛选表格，关闭后自动恢复</span>
+    </div>
+
+    <div class="filter-bar">
+        <div class="filter-group"><label>🏷️ 行政区域</label><select id="filterDistrict" class="filter-select"><option value="all">全部区域</option></select></div>
+        <div class="filter-group"><label>🔧 管材</label><select id="filterMaterial" class="filter-select"><option value="all">全部管材</option></select></div>
+        <div class="filter-group"><label>📏 阀门口径</label><select id="filterValveSize" class="filter-select"><option value="all">全部口径</option></select></div>
+        <div class="filter-group"><label>👥 施工队伍</label><select id="filterTeam" class="filter-select"><option value="all">全部队伍</option><option value="一队">一队</option><option value="二队">二队</option></select></div>
+        <div class="filter-group"><label>🔧 施工方式</label><select id="filterConstructionMethod" class="filter-select"><option value="all">全部</option><option value="旁通">旁通</option><option value="联箱">联箱</option></select></div>
+        <div class="filter-group"><label>🔒 封堵情况</label><select id="filterSealType" class="filter-select"><option value="all">全部</option><option value="单封">单封</option><option value="双封">双封</option><option value="三封">三封</option></select></div>
+        <div class="filter-group"><label>🏢 封堵队伍</label><select id="filterSealTeam" class="filter-select"><option value="all">全部</option><option value="金石湾">金石湾</option><option value="新余陆海">新余陆海</option></select></div>
+        <div class="filter-group">
+            <label>🔢 老编号</label>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="oldCodeInput" class="filter-input" placeholder="输入老编号，支持模糊匹配">
+                <button id="jumpBtn" class="filter-btn" style="background:#e0f2fe;">🔍 跳转</button>
+                <button id="clearOldCodeBtn" class="filter-btn">✖️ 清除</button>
+            </div>
+        </div>
+        <button id="resetFiltersBtn" class="action-btn">🔄 重置筛选</button>
+        <button id="resetAllDataBtn" class="action-btn reset-data-btn">⚠️ 重置所有数据</button>
+        <div class="data-ops">
+            <button id="exportDataBtn" class="action-btn" style="background:#e0f2fe;">📤 导出数据</button>
+            <button id="importDataBtn" class="action-btn" style="background:#e0f2fe;">📥 导入数据</button>
+            <input type="file" id="importFileInput" style="display: none;" accept=".json">
+        </div>
+        <div class="filter-info" id="filterInfo">当前显示：全部 (155座)</div>
+        <div class="save-indicator" id="saveIndicator">✅ 已自动保存</div>
+        <div class="date-indicator" id="todayDateDisplay">📅 加载中...</div>
+    </div>
+
+    <div class="stats-area">
+        <div class="cards">
+            <div class="stat-card not-started"><div class="label">⏸️ 未施工</div><div class="number" id="notStartedCount">0</div></div>
+            <div class="stat-card excavating"><div class="label">🚧 开挖中</div><div class="number" id="excavatingCount">0</div></div>
+            <div class="stat-card excavated"><div class="label">✅ 开挖完</div><div class="number" id="excavatedCount">0</div></div>
+            <div class="stat-card sealing"><div class="label">🔧 封堵中</div><div class="number" id="sealingCount">0</div></div>
+            <div class="stat-card sealed"><div class="label">✔️ 封堵完</div><div class="number" id="sealedCount">0</div></div>
+        </div>
+        <div class="chart-wrapper"><canvas id="statusChart" width="500" height="180"></canvas></div>
+    </div>
+
+    <div class="table-wrapper">
+        <table class="data-table" id="valveTable">
+            <thead>
+                <tr><th>顺序号</th><th>新编号</th><th>老编号</th><th>行政区域</th><th>阀井名称/位置</th><th>管材</th><th>管径</th><th>阀门口径</th><th>阀门类型</th><th>施工队伍</th>
+                <th>施工方式</th><th>阀门情况</th><th>执行机构情况</th><th>开挖/物探一致</th><th>施工状态</th><th>封堵情况</th><th>封堵队伍</th></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+    <footer>💡 所有筛选条件（包括老编号）以及数据修改都会自动保存。支持导出/导入数据，方便迁移或备份。打开网页时会自动尝试加载之前保存的数据。</footer>
+</div>
+
+<script>
+    // --------------------------------------------------------------
+    // 原始基准数据（155行，基于原Excel台账，不含用户修改）
+    // --------------------------------------------------------------
+    const rawData = [
+        [1,"BH-C-9-1","70-1","北湖开发区","翔北街与滨河路交汇","钢管","φ325","DN300","电动闸阀","二队",""],
+        [2,"BH-C-9-2","70","北湖开发区","翔北街与滨河路交汇","钢管","φ325","DN300","电动闸阀","二队",""],
+        [3,"BH-C-9-3","71","北湖开发区","翔北街与鑫盛大路交汇北侧200米","钢管","φ273","DN250","电动球阀","一队",""],
+        [4,"BH-C-9-4","73-2","北湖开发区","中科大街与大学城路交汇","钢管","φ325","DN300","电动闸阀","二队",""],
+        [5,"BH-C-9-5","76","北湖开发区","和安街与大学城路交汇","钢管","φ325","DN300","电动闸阀","二队",""],
+        [6,"BH-C-9-6","78","北湖开发区","北远达大街与鑫盛大路交汇","钢管","φ325","DN300","电动闸阀","二队",""],
+        [7,"BH-C-9-7","78-1","北湖开发区","大学城路与和安街交汇","钢管","φ325","DN300","电动闸阀","二队",""],
+        [8,"BH-C-9-8","64","北湖开发区","北远达大街与望龙桥","钢管","φ325","DN300","电动闸阀","一队",""],
+        [9,"BH-C-9-9","65","北湖开发区","北远达大街与无名河","钢管","φ325","DN300","电动闸阀","一队",""],
+        [10,"BH-C-9-10","65-1","北湖开发区","北远达大街与无名河","钢管","φ325","DN300","电动闸阀","一队",""],
+        [11,"BH-C-9-11","72","北湖开发区","北远达大街与龙兴桥","钢管","φ325","DN300","电动闸阀","一队",""],
+        [12,"BH-C-9-12","1335","北湖开发区","奥体中心中压AVK阀井","钢管","DN300","DN300","电动闸阀","二队",""],
+        [13,"BH-C-9-13","2460","北湖开发区","中科大街与丙三路交口阀井","钢管","DN300","DN300","电动闸阀","二队",""],
+        [14,"BH-C-9-14","1471","北湖开发区","北郊监狱方向主阀井","钢管","DN300","DN300","电动闸阀","二队",""],
+        [15,"BH-C-9-15","1576","北湖开发区","光机路与福源东街中压阀井","钢管","DN300","DN300","电动闸阀","二队",""],
+        [16,"BH-C-9-16","1557","北湖开发区","欧亚北湖商贸中压阀井","钢管","DN300","DN300","电动闸阀","二队",""],
+        [17,"BH-C-9-17","1559","北湖开发区","万科金域蓝湾D、B区方向阀井","钢管","DN300","DN300","电动闸阀","二队",""],
+        [18,"BH-C-9-18","1569","北湖开发区","西北环线φ325控制阀","钢管","DN300","DN300","电动闸阀","二队",""],
+        [19,"BH-C-9-19","1587","北湖开发区","龙腾英才时代中压阀井","钢管","DN300","DN300","电动闸阀","二队",""],
+        [20,"BH-C-9-20","1173","北湖开发区","盛北小街主阀井","钢管","DN300","DN300","电动闸阀","二队",""],
+        [21,"BH-C-9-21","1174","北湖开发区","天拓路273管线阀井","钢管","DN250","DN250","电动球阀","二队",""],
+        [22,"BH-C-9-22","1176","北湖开发区","雅安路中压主阀井","钢管","DN250","DN250","电动球阀","二队",""],
+        [23,"BH-C-9-23","1298","北湖开发区","雅安路预留Φ219阀井1井","钢管","DN200","DN200","电动球阀","二队",""],
+        [24,"BH-C-9-24","1318","北湖开发区","第六人民医院埋地阀","钢管","DN250","DN250","电动球阀","二队",""],
+        [25,"BH-C-9-25","1573","北湖开发区","招商学府中压阀井","钢管","DN150","DN150","球阀","二队",""],
+        [26,"BH-C-9-26","1583","北湖开发区","北湖激光中压阀井","钢管","DN300","DN300","电动闸阀","二队",""],
+        [27,"BH-C-9-27","1606","北湖开发区","知行街方向主阀井","钢管","DN300","DN300","电动闸阀","二队",""],
+        [28,"BH-C-9-28","1608","北湖开发区","尚文路中压阀井","钢管","DN300","DN300","电动闸阀","二队",""],
+        [29,"BH-C-9-29","2471","北湖开发区","雅园路中海盛世城次高压阀井","钢管","DN300","DN300","电动闸阀","二队",""],
+        [30,"CY-C-9-1","141","朝阳区","育民路长瑞汽车门前","钢管","φ529","DN500","电动闸阀","一队",""],
+        [31,"CY-C-9-2","141-1","朝阳区","育民路长瑞汽车门前","钢管","φ529","DN500","电动闸阀","一队",""],
+        [32,"CY-C-9-3","145","朝阳区","育民东路与绕城高速交汇","钢管","φ529","DN500","电动闸阀","一队",""],
+        [33,"CY-C-9-4","145-1","朝阳区","育民东路与绕城高速交汇","钢管","φ529","DN500","电动闸阀","一队",""],
+        [34,"CY-Z-9-5","147","朝阳区","阜育大街教堂旁","PE","de250","DN250","电动球阀","一队",""],
+        [35,"CY-Z-9-6","148","朝阳区","阜育大街教堂旁","PE","de160","DN150","球阀","一队",""],
+        [36,"CY-Z-9-7","148-1","朝阳区","阜育大街教堂旁","PE","de160","DN150","球阀","一队",""],
+        [37,"ED-Z-9-1","41-1","二道区","经纬南路与东盛大街交汇","PE","de160","DN150","球阀","二队",""],
+        [38,"ED-C-9-2","122-2","二道区","英腾街至英俊大街","钢管","φ219","DN200","电动球阀","一队",""],
+        [39,"ED-Z-9-3","41-2","二道区","经纬南路与东盛大街交汇","PE","de160","DN150","球阀","二队",""],
+        [40,"ED-C-9-4","123","二道区","林溪大街至英凯大街","钢管","φ325","DN300","电动闸阀","二队",""],
+        [41,"ED-C-9-5","124-2","二道区","英翔街至祥生广场","钢管","φ325","DN300","电动闸阀","一队",""],
+        [42,"ED-C-9-6","123-1","二道区","林溪大街至英凯大街","钢管","φ325","DN300","电动闸阀","二队",""],
+        [43,"ED-C-9-7","130-1","二道区","卫星村大地管线","钢管","φ426","DN400","电动闸阀","二队",""],
+        [44,"ED-C-9-8","132-2","二道区","和平小区东北角莲花山大路北侧管线","钢管","φ325","DN300","电动闸阀","一队",""],
+        [45,"ED-C-9-9","131","二道区","南沙大街南侧拉拉屯管线（北）","钢管","φ426","DN400","电动闸阀","二队",""],
+        [46,"ED-C-9-10","133","二道区","英铁路北侧大地管线","钢管","φ426","DN400","电动闸阀","二队",""],
+        [47,"ED-C-9-11","133-1","二道区","英铁路北侧大地管线","钢管","φ426","DN400","电动闸阀","二队",""],
+        [48,"ED-C-9-12","134","二道区","英凯大街东侧管线","钢管","φ426","DN400","电动闸阀","二队",""],
+        [49,"ED-C-9-13","134-1","二道区","英凯大街东侧管线","钢管","φ426","DN400","电动闸阀","二队",""],
+        [50,"ED-C-9-14","151","二道区","英泰大路，东翔街至英腾街","钢管","φ426","DN400","电动闸阀","二队",""],
+        [51,"ED-C-9-15","151-1","二道区","英泰大路，东翔街至英腾街","钢管","φ426","DN400","电动闸阀","二队",""],
+        [52,"ED-C-9-16","152","二道区","英俊镇，英凯大街东侧管线","钢管","φ325","DN300","电动闸阀","二队",""],
+        [53,"ED-C-9-17","152-1","二道区","英俊镇，英凯大街东侧管线","钢管","φ325","DN300","电动闸阀","二队",""],
+        [54,"ED-C-9-18","155-1","二道区","香卓路，英凯大街至雾雨大街","钢管","φ325","DN300","电动闸阀","二队",""],
+        [55,"ED-C-9-19","2115","二道区","英腾街 英俊名城小区西北角","钢管","φ159","DN150","球阀","一队",""],
+        [56,"ED-C-9-20","155-2","二道区","香卓路，英凯大街至雾雨大街","钢管","φ325","DN300","电动闸阀","二队",""],
+        [57,"ED-C-9-21","130","二道区","卫星村大地管线","钢管","φ426","DN400","电动闸阀","二队",""],
+        [58,"ED-C-9-22","131-1","二道区","南沙大街南侧拉拉屯管线（南）","钢管","φ426","DN400","电动闸阀","二队",""],
+        [59,"ED-C-9-23","124-1","二道区","英翔街至祥生广场","钢管","DN300","DN300（物探DN250）","电动闸阀","二队",""],
+        [60,"ED-C-9-24","备2422","二道区","英吉路次高压主控阀井","钢管","DN300","DN300","电动闸阀","一队",""],
+        [61,"ED-C-9-25","备2430","二道区","英凯大街次高压预留阀井1","钢管","DN400","DN400物探（DN350）","电动闸阀","一队",""],
+        [62,"ED-C-9-26","备2431","二道区","英凯大街次高压预留阀井2","钢管","DN300","DN300","电动闸阀","一队",""],
+        [63,"ED-C-9-27","132-1","二道区","和平小区东北角莲花山大路北侧管线","钢管","DN300","DN300（物探DN250）","电动闸阀","二队",""],
+        [64,"ED-C-9-28","备2400","二道区","英俊大街二标段次高压控制阀井","钢管","DN400","DN400物探（DN350）","电动闸阀","一队",""],
+        [65,"ED-C-9-29","备2414","二道区","四合路次高压控制阀井","钢管","DN300","DN300","电动闸阀","一队",""],
+        [66,"ED-C-9-30","备2435","二道区","香友大路次高压主控阀井","钢管","DN400","DN400（物探DN300）","电动闸阀","二队",""],
+        [67,"ED-C-9-31","备2423","二道区","英慧街次高压主控阀井","钢管","DN300","DN300（物探DN350）","电动闸阀","二队",""],
+        [68,"ED-C-9-32","备2433","二道区","香府北路次高压主控阀井","钢管","DN300","DN300","电动闸阀","一队",""],
+        [69,"ED-C-9-33","备2424","二道区","英翔西街次高压主控阀井","钢管","DN300","DN300（物探DN350）","电动闸阀","二队",""],
+        [70,"ED-C-9-34","2467","二道区","英凯大街次高压主控阀井","钢管","DN300","DN300","电动闸阀","二队",""],
+        [71,"ED-C-9-35","2479","二道区","莲花山大路与英翔东街交叉口阀井","钢管","DN400","DN400","电动闸阀","二队",""],
+        [72,"JK-Z-9-1","48","经开区","世纪大街（客车花园）","PE","de110","DN100","球阀","二队",""],
+        [73,"JK-C-9-2","101","经开区","机场路中山广场东侧","钢管","φ325","DN300","电动闸阀","一队",""],
+        [74,"JK-Z-9-3","56","经开区","东环城与自由大路交汇","PE","de90","DN80","球阀","二队",""],
+        [75,"JK-C-9-4","126","经开区","沪港路丙二街至辽港街","钢管","φ273","DN250","电动球阀","二队",""],
+        [76,"JK-C-9-5","127","经开区","南沙大街丙二街至辽港街","钢管","φ426","DN400","电动闸阀","一队",""],
+        [77,"JK-C-9-6","126-1","经开区","沪港路丙二街至辽港街","钢管","φ273","DN250","电动球阀","二队",""],
+        [78,"JK-C-9-7","129","经开区","中山大街南宁大路至101省道","钢管","φ426","DN400","电动闸阀","一队",""],
+        [79,"JK-C-9-8","129-1","经开区","中山大街南宁大路至101省道","钢管","φ426","DN400","电动闸阀","一队",""],
+        [80,"JK-C-9-9","127-1","经开区","南沙大街丙二街至辽港街","钢管","φ426","DN400","电动闸阀","二队",""],
+        [81,"JK-Z-9-10","52","经开区","东新北路青阳华府方向","PE","de200","DN200","电动球阀","二队",""],
+        [82,"JK-C-9-11","61","经开区","毛家村绕城高速","钢管","φ529","DN500","电动闸阀","二队",""],
+        [83,"JK-C-9-12","1287","经开区","成都大路方向主阀井","钢管","DN300","DN300","电动闸阀","一队",""],
+        [84,"JK-C-9-13","1652","经开区","沈阳北路以东控制阀","钢管","DN500","DN500","电动闸阀","一队",""],
+        [85,"JK-C-9-14","2174","经开区","吉港路(中山广场方向)次高压控制阀井","钢管","DN250","DN250","电动球阀","一队",""],
+        [86,"JK-C-9-15","2176","经开区","浙港街方向次高压控制阀井","钢管","DN300","DN300","电动闸阀","一队",""],
+        [87,"JK-C-9-16","2178","经开区","沪港路次高压控制阀井(苏港街西侧管线)","钢管","DN250","DN250","电动球阀","一队",""],
+        [88,"JK-C-9-17","2180","经开区","沪港路次高压控制阀井(浙港街东侧管线)","钢管","DN250","DN250","电动球阀","一队",""],
+        [89,"JK-C-9-18","61-1","经开区","毛家村绕城高速","钢管","φ529","DN500","电动闸阀","二队",""],
+        [90,"JY-C-9-1","457","净月区","南环线新城大街路口中控阀井","钢管","DN500","DN500","电动闸阀","二队",""],
+        [91,"JY-C-9-2","458","净月区","南环线营口路路口中控阀井","钢管","DN500","DN500","电动闸阀","二队",""],
+        [92,"JY-C-9-3","459","净月区","南环线洋浦输气站东侧中控阀井","钢管","DN500","DN500","电动闸阀","二队",""],
+        [93,"JT-C-9-1","116-1","九台区","康家屯至魏家窝堡大地段管线","钢管","φ426","DN400","电动闸阀","一队",""],
+        [94,"JT-C-9-2","128","九台区","山水大道至同鑫生态城","钢管","φ325","DN300","电动闸阀","二队",""],
+        [95,"JT-C-9-3","116","九台区","康家屯至魏家窝堡大地段管线","钢管","φ426","DN400","电动闸阀","一队",""],
+        [96,"JT-C-9-4","128-1","九台区","山水大道至同鑫生态城","钢管","φ325","DN300","电动闸阀","二队",""],
+        [97,"JT-C-9-5","1312","九台区","去往怡生贸易方向主阀井","钢管","DN250","DN250","电动球阀","二队",""],
+        [98,"JT-C-9-6","1605","九台区","佛山大街南延长线主阀井","钢管","DN300","DN300","电动闸阀","二队",""],
+        [99,"JT-C-9-7","2187","九台区","正义路次高压控制阀井","钢管","DN300","DN300","电动闸阀","二队",""],
+        [100,"JT-C-9-8","2157","九台区","龙嘉机场方向次高压控制阀井","钢管","DN400","DN400","电动闸阀","二队",""],
+        [101,"JT-C-9-9","2159","九台区","龙双公路东侧次高压预留阀井1","钢管","DN400","DN400","电动闸阀","二队",""],
+        [102,"JT-C-9-10","2160","九台区","龙双公路东侧次高压预留阀井2","钢管","DN400","DN400","电动闸阀","二队",""],
+        [103,"JT-C-9-11","2161","九台区","龙双公路东侧下游次高压阀井","钢管","DN400","DN400","电动闸阀","二队",""],
+        [104,"JT-C-9-12","备2401","九台区","乙七路次高压控制阀井","钢管","DN300","DN300","电动闸阀","一队",""],
+        [105,"JT-C-9-13","备2488","九台区","丙五十一路次高压控制阀井","钢管","DN300","DN300","电动闸阀","一队",""],
+        [106,"JT-C-9-14","2191","九台区","富兴路次高压阀开","钢管","DN300","DN300（物探图、实际DN250）","电动闸阀","二队",""],
+        [107,"KC-C-9-1","2-1","宽城区","023乡道西侧","钢管","φ426","DN400","电动闸阀","一队",""],
+        [108,"KC-C-9-2","2","宽城区","023乡道西侧","钢管","φ426","DN400","电动闸阀","一队",""],
+        [109,"LH-C-9-1","103-1","莲花山度假区","雾开河大街至东自由大路","钢管","φ273","DN250","电动球阀","一队",""],
+        [110,"LH-C-9-2","107-1","莲花山度假区","龙府路至劝农山镇村路","钢管","φ273","DN250","电动球阀","二队",""],
+        [111,"LH-C-9-3","107-2","莲花山度假区","龙府路至劝农山镇村路","钢管","φ273","DN250","电动球阀","二队",""],
+        [112,"LH-C-9-4","110-1","莲花山度假区","世三路至世一路","钢管","φ426","DN400","电动闸阀","二队",""],
+        [113,"LH-C-9-5","110-2","莲花山度假区","世三路至世一路","钢管","φ426","DN400","电动闸阀","二队",""],
+        [114,"LH-C-9-6","113-2","莲花山度假区","林溪大街至雾开河大街","钢管","φ273","DN250","电动球阀","二队",""],
+        [115,"LH-C-9-7","114-2","莲花山度假区","雾八路至雾九路","钢管","φ159","DN150","球阀","二队",""],
+        [116,"LH-C-9-8","115-1","莲花山度假区","中天东君府至东吉林大路","钢管","φ426","DN400","电动闸阀","二队",""],
+        [117,"LH-C-9-9","115-2","莲花山度假区","中天东君府至东吉林大路","钢管","φ426","DN400","电动闸阀","二队",""],
+        [118,"LH-C-9-10","108-1","莲花山度假区","龙府路至净莲大街","钢管","φ273","DN250","电动球阀","二队",""],
+        [119,"LH-C-9-11","108-2","莲花山度假区","龙府路至净莲大街","钢管","φ273","DN250","电动球阀","二队",""],
+        [120,"LH-C-9-12","109-1","莲花山度假区","劝农大街至净莲大街","钢管","φ273","DN250","电动球阀","二队",""],
+        [121,"LH-C-9-13","111","莲花山度假区","劝农大街莲花印象小区北区正门","钢管","φ426","DN400","电动闸阀","二队",""],
+        [122,"LH-C-9-14","2198","莲花山度假区","劝农大街劝农广场以北次高压控制阀井2","钢管","DN250","DN250","电动球阀","一队",""],
+        [123,"LH-C-9-15","2199","莲花山度假区","长春悦翊房地产有限公司（世茂）次高压控制阀井","钢管","DN250","DN250","电动球阀","一队",""],
+        [124,"LH-C-9-16","2212","莲花山度假区","长春锐翊房地长公司锅炉房次高压阀井","钢管","DN250","DN250","电动球阀","一队",""],
+        [125,"LH-C-9-17","备2508","莲花山度假区","乙五街次高压控制阀井","钢管","DN400","DN400","电动闸阀","一队",""],
+        [126,"LH-C-9-18","112-2","莲花山度假区","祥生广场至东吉林大路","钢管","φ273","DN250","电动球阀","二队",""],
+        [127,"LH-C-9-19","109-2","莲花山度假区","劝农大街至净莲大街","钢管","φ273","DN250","电动球阀","二队",""],
+        [128,"LY-Z-9-1","98-1","绿园区","西环城路与南阳路交汇","pe","de250","DN250","电动球阀","二队","打压完成"],
+        [129,"LY-Z-9-2","99-1","绿园区","西环城路与南阳路交汇","pe","de160","DN150","球阀","二队","打压完成"],
+        [130,"LY-C-9-3","1853","绿园区","集善路中压阀井","钢管","DN250","DN250","电动球阀","二队",""],
+        [131,"LY-C-9-4","1854","绿园区","景阳大路中压阀井","钢管","DN250","DN250","电动球阀","二队",""],
+        [132,"LY-C-9-5","1855","绿园区","集德路中控阀井","钢管","DN250","DN250","电动球阀","二队",""],
+        [133,"LY-C-9-6","1859","绿园区","南环线529高速东侧阀井","钢管","DN500","DN500","电动闸阀","二队",""],
+        [134,"LY-C-9-7","1874","绿园区","西宸之光中压阀井","钢管","DN400","DN400","电动闸阀","二队",""],
+        [135,"QK-C-9-1","84-1","汽开区","兴顺路与汽车厂内部铁路","钢管","φ529","DN500","电动闸阀","二队",""],
+        [136,"QK-Z-9-2","85","汽开区","东风大街与高速交汇","PE","de250","DN250","电动球阀","二队",""],
+        [137,"QK-C-9-3","92","汽开区","西北环线与无名河交汇","钢管","φ426","DN400","电动闸阀","一队",""],
+        [138,"QK-C-9-4","92-1","汽开区","西北环线与无名河交汇","钢管","φ426","DN400","电动闸阀","一队",""],
+        [139,"QK-Z-9-5","85-1","汽开区","东风大街与高速交汇","PE","de250","DN250","电动球阀","二队",""],
+        [140,"QK-C-9-6","86-1","汽开区","富民大路与高速交汇","钢管","φ325","DN300","电动闸阀","二队",""],
+        [141,"QK-Z-9-7","138","汽开区","新红旗大街与骏派街交汇（河流北侧）","PE","de250","DN250","电动球阀","一队",""],
+        [142,"QK-Z-9-8","94","汽开区","兴顺路与永春河交汇","PE","de160","DN150","球阀","二队",""],
+        [143,"QK-Z-9-9","94-1","汽开区","兴顺路与永春河交汇","PE","de160","DN150","球阀","二队",""],
+        [144,"QK-C-9-10","140","汽开区","和谐大街与铁路交汇","钢管","φ529","DN500","电动闸阀","二队",""],
+        [145,"QK-C-9-11","140-1","汽开区","和谐大街与铁路交汇","钢管","φ529","DN500","电动闸阀","二队",""],
+        [146,"QK-C-9-12","144","汽开区","警备路与绕城高速交汇","钢管","Φ377","DN350","电动闸阀","二队",""],
+        [147,"QK-C-9-13","备2089","汽开区","426总阀","钢管","DN400","DN400","电动闸阀","一队",""],
+        [148,"QK-C-9-14","备2605","汽开区","汽车大路南侧红旗新能源阀井","钢管","DN300","DN300","电动闸阀","一队",""],
+        [149,"QK-C-9-15","备2616","汽开区","汽车大路（红旗新能源下游）中控阀井","钢管","DN500","DN500","电动闸阀","一队",""],
+        [150,"QK-C-9-16","备2639","汽开区","地通汽车方向阀井","钢管","DN500","DN500（物探DN400）","电动闸阀","一队",""],
+        [151,"QK-C-9-17","144-1","汽开区","警备路与绕城高速交汇","钢管","Φ377","DN350","电动闸阀","二队",""],
+        [152,"QK-C-9-18","1860","汽开区","南环线529高速西侧阀井","钢管","DN500","DN500","电动闸阀","二队",""],
+        [153,"QK-C-9-19","1725","汽开区","一汽专供325阀井","钢管","DN300","DN300","电动闸阀","二队",""],
+        [154,"QK-C-9-20","1906","汽开区","汽研二期阀井","钢管","DN200","DN200","电动球阀","二队",""],
+        [155,"ZH-C-9-1","2453","中韩合作示范区","聚德大街阀井","钢管","DN300","DN300","电动闸阀","二队",""]
+    ];
+
+    // 生成初始基准数据（不含用户修改）
+    function getBaseValveData() {
+        return rawData.map(row => {
+            let remarks = row[10] ? row[10].toString() : "";
+            let initStatus = remarks.includes("打压完成") ? "封堵完" : "未施工";
+            return {
+                seq: row[0], newCode: row[1], oldCode: row[2], district: row[3], location: row[4],
+                pipeMaterial: row[5], pipeDiameter: row[6], valveSize: row[7], valveType: row[8], team: row[9],
+                constructionMethod: "", valveStatus: "", actuatorStatus: "", consistency: "",
+                status: initStatus, sealType: "", sealTeam: ""
+            };
+        });
+    }
+
+    let valveData = [];
+    let currentFilters = {
+        district: 'all', material: 'all', valveSize: 'all', team: 'all',
+        constructionMethod: 'all', sealType: 'all', sealTeam: 'all', statusFilter: 'all',
+        oldCode: ''
+    };
+    let statusChart = null;
+
+    // ---------- 数据持久化 ----------
+    const STORAGE_KEY_DATA = 'valveData_v9';
+    const STORAGE_KEY_FILTERS = 'filters_v9';
+
+    function saveDataToLocalStorage() {
+        localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(valveData));
+        const indicator = document.getElementById('saveIndicator');
+        if (indicator) {
+            indicator.textContent = '💾 已保存';
+            indicator.style.opacity = '1';
+            setTimeout(() => { indicator.style.opacity = '0.6'; }, 1000);
+        }
+    }
+
+    function loadDataFromLocalStorage() {
+        const saved = localStorage.getItem(STORAGE_KEY_DATA);
+        if (saved) {
+            try {
+                return JSON.parse(saved);
+            } catch(e) { return null; }
+        }
+        return null;
+    }
+
+    function saveFiltersToLocalStorage() {
+        localStorage.setItem(STORAGE_KEY_FILTERS, JSON.stringify(currentFilters));
+    }
+
+    function loadFiltersFromLocalStorage() {
+        const saved = localStorage.getItem(STORAGE_KEY_FILTERS);
+        if (saved) {
+            try {
+                return JSON.parse(saved);
+            } catch(e) { return null; }
+        }
+        return null;
+    }
+
+    // 尝试从旧版本迁移数据（v7, v8）
+    function migrateOldData() {
+        const oldKeys = ['valveData_v7', 'valveData_v8'];
+        for (const key of oldKeys) {
+            const oldData = localStorage.getItem(key);
+            if (oldData) {
+                try {
+                    const parsed = JSON.parse(oldData);
+                    if (parsed && Array.isArray(parsed) && parsed.length === 155 && parsed[0].hasOwnProperty('constructionMethod')) {
+                        console.log(`成功从 ${key} 迁移数据`);
+                        return parsed;
+                    }
+                } catch(e) {}
+            }
+        }
+        return null;
+    }
+
+    // ---------- 辅助函数 ----------
+    function getFilteredData() {
+        return valveData.filter(item => {
+            if (currentFilters.district !== 'all' && item.district !== currentFilters.district) return false;
+            let mat = item.pipeMaterial.toLowerCase() === 'pe' ? 'PE' : (item.pipeMaterial === '钢管' ? '钢管' : item.pipeMaterial);
+            if (currentFilters.material !== 'all' && mat !== currentFilters.material) return false;
+            let vsRaw = item.valveSize.match(/DN\d+/i);
+            let vsKey = vsRaw ? vsRaw[0] : item.valveSize;
+            if (currentFilters.valveSize !== 'all' && vsKey !== currentFilters.valveSize) return false;
+            if (currentFilters.team !== 'all' && item.team !== currentFilters.team) return false;
+            if (currentFilters.constructionMethod !== 'all' && item.constructionMethod !== currentFilters.constructionMethod) return false;
+            if (currentFilters.sealType !== 'all' && item.sealType !== currentFilters.sealType) return false;
+            if (currentFilters.sealTeam !== 'all' && item.sealTeam !== currentFilters.sealTeam) return false;
+            if (currentFilters.statusFilter !== 'all' && item.status !== currentFilters.statusFilter) return false;
+            if (currentFilters.oldCode && currentFilters.oldCode.trim() !== '') {
+                const keyword = currentFilters.oldCode.trim().toLowerCase();
+                const oldCodeVal = item.oldCode ? item.oldCode.toString().toLowerCase() : '';
+                if (oldCodeVal.indexOf(keyword) === -1) return false;
+            }
+            return true;
+        });
+    }
+
+    function updateStatsAndChart() {
+        const filtered = getFilteredData();
+        let notStarted = 0, excavating = 0, excavated = 0, sealing = 0, sealed = 0;
+        filtered.forEach(v => {
+            if (v.status === '未施工') notStarted++;
+            else if (v.status === '开挖中') excavating++;
+            else if (v.status === '开挖完') excavated++;
+            else if (v.status === '封堵中') sealing++;
+            else if (v.status === '封堵完') sealed++;
+        });
+        document.getElementById('notStartedCount').innerText = notStarted;
+        document.getElementById('excavatingCount').innerText = excavating;
+        document.getElementById('excavatedCount').innerText = excavated;
+        document.getElementById('sealingCount').innerText = sealing;
+        document.getElementById('sealedCount').innerText = sealed;
+        const total = filtered.length;
+        let statusText = currentFilters.statusFilter === 'all' ? '' : `，施工状态：${currentFilters.statusFilter}`;
+        let oldCodeText = (currentFilters.oldCode && currentFilters.oldCode.trim() !== '') ? `，老编号匹配：${currentFilters.oldCode}` : '';
+        document.getElementById('filterInfo').innerHTML = `当前显示：${total}座${statusText}${oldCodeText}`;
+        if (statusChart) {
+            statusChart.data.datasets[0].data = [notStarted, excavating, excavated, sealing, sealed];
+            statusChart.update();
+        } else {
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            statusChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['未施工', '开挖中', '开挖完', '封堵中', '封堵完'],
+                    datasets: [{ data: [notStarted, excavating, excavated, sealing, sealed], backgroundColor: ['#9ca3af', '#f97316', '#fbbf24', '#10b981', '#3b82f6'], borderWidth: 0 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: true,
+                    plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.raw} 座 (${total ? ((ctx.raw/total)*100).toFixed(1) : 0}%)` } } }
+                }
+            });
+        }
+    }
+
+    function createSelect(options, selectedValue, className) {
+        const select = document.createElement('select');
+        select.className = className;
+        options.forEach(optVal => {
+            const option = document.createElement('option');
+            option.value = optVal;
+            option.textContent = optVal === '' ? '—' : optVal;
+            if (selectedValue === optVal) option.selected = true;
+            select.appendChild(option);
+        });
+        return select;
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        const filtered = getFilteredData();
+        filtered.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.appendChild(createTd(item.seq));
+            tr.appendChild(createTd(item.newCode));
+            tr.appendChild(createTd(`<span class="old-num">${item.oldCode}</span>`));
+            tr.appendChild(createTd(item.district));
+            tr.appendChild(createTd(item.location));
+            tr.appendChild(createTd(item.pipeMaterial));
+            tr.appendChild(createTd(item.pipeDiameter));
+            tr.appendChild(createTd(item.valveSize));
+            tr.appendChild(createTd(item.valveType));
+            tr.appendChild(createTd(item.team));
+            
+            const methodTd = document.createElement('td');
+            const methodSelect = createSelect(['', '旁通', '联箱'], item.constructionMethod, 'construction-select');
+            methodSelect.addEventListener('change', (e) => {
+                valveData.find(v => v.seq === item.seq).constructionMethod = e.target.value;
+                saveDataToLocalStorage();
+                renderTable(); updateStatsAndChart();
+            });
+            methodTd.appendChild(methodSelect);
+            tr.appendChild(methodTd);
+            
+            const valveStatusTd = document.createElement('td');
+            const valveStatusSelect = createSelect(['', '排产', '到货', '打压'], item.valveStatus, 'valve-status-select');
+            valveStatusSelect.addEventListener('change', (e) => {
+                valveData.find(v => v.seq === item.seq).valveStatus = e.target.value;
+                saveDataToLocalStorage();
+                renderTable(); updateStatsAndChart();
+            });
+            valveStatusTd.appendChild(valveStatusSelect);
+            tr.appendChild(valveStatusTd);
+            
+            const actuatorTd = document.createElement('td');
+            const actuatorSelect = createSelect(['', '排产', '到货'], item.actuatorStatus, 'actuator-select');
+            actuatorSelect.addEventListener('change', (e) => {
+                valveData.find(v => v.seq === item.seq).actuatorStatus = e.target.value;
+                saveDataToLocalStorage();
+                renderTable(); updateStatsAndChart();
+            });
+            actuatorTd.appendChild(actuatorSelect);
+            tr.appendChild(actuatorTd);
+            
+            const consistencyTd = document.createElement('td');
+            const consistencySelect = createSelect(['', '是', '否'], item.consistency, 'consistency-select');
+            consistencySelect.addEventListener('change', (e) => {
+                valveData.find(v => v.seq === item.seq).consistency = e.target.value;
+                saveDataToLocalStorage();
+                renderTable(); updateStatsAndChart();
+            });
+            consistencyTd.appendChild(consistencySelect);
+            tr.appendChild(consistencyTd);
+            
+            const statusTd = document.createElement('td');
+            const statusOptions = ['未施工', '开挖中', '开挖完', '封堵中', '封堵完'];
+            const statusSelect = createSelect(statusOptions, item.status, 'status-select');
+            const updateStatusClass = () => {
+                const val = statusSelect.value;
+                let cls = 'status-select';
+                if (val === '未施工') cls += ' not-started';
+                else if (val === '开挖中') cls += ' excavating';
+                else if (val === '开挖完') cls += ' excavated';
+                else if (val === '封堵中') cls += ' sealing';
+                else if (val === '封堵完') cls += ' sealed';
+                statusSelect.className = cls;
+            };
+            updateStatusClass();
+            statusSelect.addEventListener('change', (e) => {
+                const globalItem = valveData.find(v => v.seq === item.seq);
+                if (globalItem) globalItem.status = e.target.value;
+                updateStatusClass();
+                renderTable();
+                updateStatsAndChart();
+                saveDataToLocalStorage();
+            });
+            statusTd.appendChild(statusSelect);
+            tr.appendChild(statusTd);
+            
+            const sealTd = document.createElement('td');
+            const sealSelect = createSelect(['', '单封', '双封', '三封'], item.sealType, 'seal-select');
+            sealSelect.addEventListener('change', (e) => {
+                valveData.find(v => v.seq === item.seq).sealType = e.target.value;
+                renderTable(); updateStatsAndChart(); saveDataToLocalStorage();
+            });
+            sealTd.appendChild(sealSelect);
+            tr.appendChild(sealTd);
+            
+            const teamTd = document.createElement('td');
+            const teamSelect = createSelect(['', '金石湾', '新余陆海'], item.sealTeam, 'team-select');
+            teamSelect.addEventListener('change', (e) => {
+                valveData.find(v => v.seq === item.seq).sealTeam = e.target.value;
+                renderTable(); updateStatsAndChart(); saveDataToLocalStorage();
+            });
+            teamTd.appendChild(teamSelect);
+            tr.appendChild(teamTd);
+            
+            tbody.appendChild(tr);
+        });
+    }
+
+    function createTd(content) {
+        const td = document.createElement('td');
+        if (typeof content === 'string' && content.includes('span')) td.innerHTML = content;
+        else td.textContent = content;
+        return td;
+    }
+
+    function refreshDashboard() {
+        renderTable();
+        updateStatsAndChart();
+    }
+
+    function updateTodayDate() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+        const weekday = weekdays[today.getDay()];
+        const dateElem = document.getElementById('todayDateDisplay');
+        if (dateElem) dateElem.innerHTML = `📅 ${year}年${month}月${day}日 (${weekday})`;
+    }
+
+    function scrollToFirstMatch() {
+        const filtered = getFilteredData();
+        if (filtered.length === 0) {
+            alert('未找到匹配的老编号');
+            return;
+        }
+        const tbody = document.getElementById('tableBody');
+        const rows = tbody.querySelectorAll('tr');
+        if (rows.length === 0) return;
+        const firstRow = rows[0];
+        if (firstRow) {
+            rows.forEach(row => row.classList.remove('highlight-row'));
+            firstRow.classList.add('highlight-row');
+            firstRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => {
+                firstRow.classList.remove('highlight-row');
+            }, 2000);
+        }
+    }
+
+    // 导出数据
+    function exportData() {
+        const dataStr = JSON.stringify(valveData, null, 2);
+        const blob = new Blob([dataStr], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `valve_data_${new Date().toISOString().slice(0,19)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // 导入数据
+    function importData(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const imported = JSON.parse(e.target.result);
+                if (imported && Array.isArray(imported) && imported.length === 155 && imported[0].hasOwnProperty('constructionMethod')) {
+                    valveData = imported;
+                    saveDataToLocalStorage();
+                    refreshDashboard();
+                    alert('数据导入成功！');
+                } else {
+                    alert('无效的数据文件，请确保文件包含155条完整记录。');
+                }
+            } catch(err) {
+                alert('解析文件失败：' + err.message);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // ---------- 事件绑定 ----------
+    function bindEvents() {
+        const filterMap = {
+            'filterDistrict':'district', 'filterMaterial':'material', 'filterValveSize':'valveSize',
+            'filterTeam':'team', 'filterConstructionMethod':'constructionMethod',
+            'filterSealType':'sealType', 'filterSealTeam':'sealTeam'
+        };
+        for (const [id, key] of Object.entries(filterMap)) {
+            document.getElementById(id).addEventListener('change', (e) => {
+                currentFilters[key] = e.target.value;
+                saveFiltersToLocalStorage();
+                refreshDashboard();
+            });
+        }
+
+        // 老编号跳转
+        document.getElementById('jumpBtn').addEventListener('click', () => {
+            const keyword = document.getElementById('oldCodeInput').value.trim();
+            if (keyword === '') {
+                alert('请输入老编号');
+                return;
+            }
+            currentFilters.oldCode = keyword;
+            saveFiltersToLocalStorage();
+            refreshDashboard();
+            setTimeout(() => scrollToFirstMatch(), 100);
+        });
+        document.getElementById('clearOldCodeBtn').addEventListener('click', () => {
+            currentFilters.oldCode = '';
+            document.getElementById('oldCodeInput').value = '';
+            saveFiltersToLocalStorage();
+            refreshDashboard();
+        });
+
+        // 重置筛选
+        document.getElementById('resetFiltersBtn').addEventListener('click', () => {
+            currentFilters = {
+                district: 'all', material: 'all', valveSize: 'all', team: 'all',
+                constructionMethod: 'all', sealType: 'all', sealTeam: 'all', statusFilter: 'all', oldCode: ''
+            };
+            saveFiltersToLocalStorage();
+            document.getElementById('filterDistrict').value = 'all';
+            document.getElementById('filterMaterial').value = 'all';
+            document.getElementById('filterValveSize').value = 'all';
+            document.getElementById('filterTeam').value = 'all';
+            document.getElementById('filterConstructionMethod').value = 'all';
+            document.getElementById('filterSealType').value = 'all';
+            document.getElementById('filterSealTeam').value = 'all';
+            document.getElementById('oldCodeInput').value = '';
+            refreshDashboard();
+        });
+
+        // 重置所有数据（恢复初始）
+        document.getElementById('resetAllDataBtn').addEventListener('click', () => {
+            if (confirm("⚠️ 确定要重置所有数据吗？所有手动修改将丢失，恢复到初始状态。")) {
+                valveData = getBaseValveData();
+                saveDataToLocalStorage();
+                currentFilters = {
+                    district: 'all', material: 'all', valveSize: 'all', team: 'all',
+                    constructionMethod: 'all', sealType: 'all', sealTeam: 'all', statusFilter: 'all', oldCode: ''
+                };
+                saveFiltersToLocalStorage();
+                // 重置下拉框
+                document.getElementById('filterDistrict').value = 'all';
+                document.getElementById('filterMaterial').value = 'all';
+                document.getElementById('filterValveSize').value = 'all';
+                document.getElementById('filterTeam').value = 'all';
+                document.getElementById('filterConstructionMethod').value = 'all';
+                document.getElementById('filterSealType').value = 'all';
+                document.getElementById('filterSealTeam').value = 'all';
+                document.getElementById('oldCodeInput').value = '';
+                refreshDashboard();
+            }
+        });
+
+        // 导出/导入
+        document.getElementById('exportDataBtn').addEventListener('click', exportData);
+        const importBtn = document.getElementById('importDataBtn');
+        const fileInput = document.getElementById('importFileInput');
+        importBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                importData(e.target.files[0]);
+                fileInput.value = '';
+            }
+        });
+
+        // 施工状态图例链接
+        const links = document.querySelectorAll('.status-filter-link');
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const status = link.getAttribute('data-status');
+                currentFilters.statusFilter = (status === 'all') ? 'all' : status;
+                saveFiltersToLocalStorage();
+                refreshDashboard();
+            });
+        });
+    }
+
+    // 初始化筛选下拉框选项
+    function populateFilters() {
+        const districts = [...new Set(rawData.map(r => r[3]))].sort();
+        const materials = [...new Set(rawData.map(r => r[5].toLowerCase() === 'pe' ? 'PE' : (r[5] === '钢管' ? '钢管' : r[5])))].sort();
+        const valveSizes = [...new Set(rawData.map(r => {
+            let match = r[7].match(/DN\d+/i);
+            return match ? match[0] : r[7];
+        }))].sort((a,b) => (parseInt(a.replace(/\D/g,'')) || 0) - (parseInt(b.replace(/\D/g,'')) || 0));
+        
+        const districtSel = document.getElementById('filterDistrict');
+        districts.forEach(d => { let opt = document.createElement('option'); opt.value = d; opt.textContent = d; districtSel.appendChild(opt); });
+        const materialSel = document.getElementById('filterMaterial');
+        materials.forEach(m => { let opt = document.createElement('option'); opt.value = m; opt.textContent = m; materialSel.appendChild(opt); });
+        const valveSel = document.getElementById('filterValveSize');
+        valveSizes.forEach(vs => { let opt = document.createElement('option'); opt.value = vs; opt.textContent = vs; valveSel.appendChild(opt); });
+    }
+
+    function init() {
+        // 尝试加载数据：优先最新存储，其次旧版本迁移，最后基准数据
+        let loadedData = loadDataFromLocalStorage();
+        if (!loadedData) loadedData = migrateOldData();
+        if (loadedData && Array.isArray(loadedData) && loadedData.length === 155 && loadedData[0].hasOwnProperty('constructionMethod')) {
+            valveData = loadedData;
+        } else {
+            valveData = getBaseValveData();
+        }
+        // 加载筛选条件
+        const savedFilters = loadFiltersFromLocalStorage();
+        if (savedFilters) {
+            currentFilters = { ...currentFilters, ...savedFilters };
+        }
+        populateFilters();
+        // 同步下拉框当前值
+        document.getElementById('filterDistrict').value = currentFilters.district;
+        document.getElementById('filterMaterial').value = currentFilters.material;
+        document.getElementById('filterValveSize').value = currentFilters.valveSize;
+        document.getElementById('filterTeam').value = currentFilters.team;
+        document.getElementById('filterConstructionMethod').value = currentFilters.constructionMethod;
+        document.getElementById('filterSealType').value = currentFilters.sealType;
+        document.getElementById('filterSealTeam').value = currentFilters.sealTeam;
+        document.getElementById('oldCodeInput').value = currentFilters.oldCode || '';
+        
+        bindEvents();
+        refreshDashboard();
+        updateTodayDate();
+        // 首次保存确保数据持久化
+        saveDataToLocalStorage();
+        saveFiltersToLocalStorage();
+    }
+
+    init();
+</script>
+</body>
+</html>
