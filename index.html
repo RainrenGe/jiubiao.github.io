@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>九标段阀井交工台账 - 五态施工状态（含阀门情况筛选）</title>
+    <title>九标段阀井交工台账 - 六态施工状态（含阀门情况筛选）</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { box-sizing: border-box; }
@@ -75,6 +75,7 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
         .legend-color.not-started { background-color: #e5e7eb; border: 1px solid #9ca3af; }
+        .legend-color.excavatable { background-color: #c084fc; border: 1px solid #7e22ce; }
         .legend-color.excavating { background-color: #f97316; border: 1px solid #c2410c; }
         .legend-color.excavated { background-color: #fbbf24; border: 1px solid #d97706; }
         .legend-color.sealing { background-color: #10b981; border: 1px solid #047857; }
@@ -172,7 +173,7 @@
             background: white;
             border-radius: 28px;
             padding: 16px 28px;
-            min-width: 130px;
+            min-width: 120px;
             text-align: center;
             box-shadow: 0 2px 6px rgba(0,0,0,0.05);
             border: 1px solid #e2edf2;
@@ -190,6 +191,7 @@
             line-height: 1;
         }
         .stat-card.not-started .number { color: #4b5563; }
+        .stat-card.excavatable .number { color: #6b21a5; }
         .stat-card.excavating .number { color: #c2410c; }
         .stat-card.excavated .number { color: #b45309; }
         .stat-card.sealing .number { color: #047857; }
@@ -246,6 +248,7 @@
             width: 110px;
         }
         .status-select.not-started { background-color: #e5e7eb; color: #1f2937; border-color: #9ca3af; }
+        .status-select.excavatable { background-color: #c084fc; color: white; border-color: #7e22ce; }
         .status-select.excavating { background-color: #f97316; color: white; border-color: #c2410c; }
         .status-select.excavated { background-color: #fbbf24; color: #78350f; border-color: #d97706; }
         .status-select.sealing { background-color: #10b981; color: white; border-color: #047857; }
@@ -366,12 +369,13 @@
 <div class="dashboard-container">
     <h1>
         📋 九标段阀井交工台账
-        <span class="badge-note">🎨 高对比五态 · 阀门情况筛选</span>
+        <span class="badge-note">🎨 六态施工 · 新增“可开挖”</span>
     </h1>
     <div class="sub">📍 北湖开发区 · 朝阳区 · 二道区 · 经开区 · 净月区 · 莲花山 · 汽开区 · 中韩合作区等 | 总计155座阀井</div>
 
     <div class="legend-bar">
         <span class="legend-item"><span class="legend-color not-started"></span> <a href="javascript:void(0)" class="status-filter-link" data-status="未施工">未施工</a></span>
+        <span class="legend-item"><span class="legend-color excavatable"></span> <a href="javascript:void(0)" class="status-filter-link" data-status="可开挖">可开挖</a></span>
         <span class="legend-item"><span class="legend-color excavating"></span> <a href="javascript:void(0)" class="status-filter-link" data-status="开挖中">开挖中</a></span>
         <span class="legend-item"><span class="legend-color excavated"></span> <a href="javascript:void(0)" class="status-filter-link" data-status="开挖完">开挖完</a></span>
         <span class="legend-item"><span class="legend-color sealing"></span> <a href="javascript:void(0)" class="status-filter-link" data-status="封堵中">封堵中</a></span>
@@ -388,7 +392,6 @@
         <div class="filter-group"><label>🔧 施工方式</label><select id="filterConstructionMethod" class="filter-select"><option value="all">全部</option><option value="旁通">旁通</option><option value="联箱">联箱</option></select></div>
         <div class="filter-group"><label>🔒 封堵情况</label><select id="filterSealType" class="filter-select"><option value="all">全部</option><option value="单封">单封</option><option value="双封">双封</option><option value="三封">三封</option></select></div>
         <div class="filter-group"><label>🏢 封堵队伍</label><select id="filterSealTeam" class="filter-select"><option value="all">全部</option><option value="金石湾">金石湾</option><option value="新余陆海">新余陆海</option></select></div>
-        <!-- 新增：阀门情况筛选项 -->
         <div class="filter-group"><label>🚪 阀门情况</label><select id="filterValveStatus" class="filter-select"><option value="all">全部</option><option value="排产">排产</option><option value="到货">到货</option><option value="打压">打压</option></select></div>
         <div class="filter-group">
             <label>🔢 老编号</label>
@@ -412,7 +415,8 @@
     <div class="stats-area">
         <div class="cards">
             <div class="stat-card not-started"><div class="label">⏸️ 未施工</div><div class="number" id="notStartedCount">0</div></div>
-            <div class="stat-card excavating"><div class="label">🚧 开挖中</div><div class="number" id="excavatingCount">0</div></div>
+            <div class="stat-card excavatable"><div class="label">🚧 可开挖</div><div class="number" id="excavatableCount">0</div></div>
+            <div class="stat-card excavating"><div class="label">🪨 开挖中</div><div class="number" id="excavatingCount">0</div></div>
             <div class="stat-card excavated"><div class="label">✅ 开挖完</div><div class="number" id="excavatedCount">0</div></div>
             <div class="stat-card sealing"><div class="label">🔧 封堵中</div><div class="number" id="sealingCount">0</div></div>
             <div class="stat-card sealed"><div class="label">✔️ 封堵完</div><div class="number" id="sealedCount">0</div></div>
@@ -437,11 +441,14 @@
         <button id="resetAllDataBtn" class="btn-subtle-reset">⚠️ 重置所有数据</button>
     </div>
 
-    <footer>💡 所有修改自动保存。支持导出/导入完整数据。新增“阀门情况”筛选（排产/到货/打压）。日期工期包含首尾日。</footer>
+    <footer>💡 所有修改自动保存。支持导出/导入完整数据。新增“可开挖”状态及图例筛选，饼图同步六态。</footer>
 </div>
 
 <script>
-    // ================= 原始基准数据（155行） =================
+    // 施工状态常量（六态）
+    const STATUS_LIST = ['未施工', '可开挖', '开挖中', '开挖完', '封堵中', '封堵完'];
+    
+    // 原始基准数据（155行，完全保留）
     const rawData = [
         [1,"BH-C-9-1","70-1","北湖开发区","翔北街与滨河路交汇","钢管","φ325","DN300","电动闸阀","二队",""],
         [2,"BH-C-9-2","70","北湖开发区","翔北街与滨河路交汇","钢管","φ325","DN300","电动闸阀","二队",""],
@@ -600,7 +607,6 @@
         [155,"ZH-C-9-1","2453","中韩合作示范区","聚德大街阀井","钢管","DN300","DN300","电动闸阀","二队",""]
     ];
 
-    // 计算包含首尾日的天数
     function computeDaysInclusive(startDate, endDate) {
         if (!startDate || !endDate) return null;
         const start = new Date(startDate);
@@ -629,79 +635,17 @@
     let currentFilters = {
         district: 'all', material: 'all', valveSize: 'all', team: 'all',
         constructionMethod: 'all', sealType: 'all', sealTeam: 'all', statusFilter: 'all',
-        valveStatusFilter: 'all',  // 新增阀门情况筛选
-        oldCode: ''
+        valveStatusFilter: 'all', oldCode: ''
     };
     let statusChart = null;
+    const STORAGE_KEY_DATA = 'valveData_v10_six_status_inclusive';
+    const STORAGE_KEY_FILTERS = 'filters_v10_six_status';
 
-    const STORAGE_KEY_DATA = 'valveData_v9_inclusive_dates_final';
-    const STORAGE_KEY_FILTERS = 'filters_v9_with_valvestatus';
-
-    function saveDataToLocalStorage() {
-        localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(valveData));
-        const indicator = document.getElementById('saveIndicator');
-        if (indicator) {
-            indicator.textContent = '💾 已保存';
-            indicator.style.opacity = '1';
-            setTimeout(() => { indicator.style.opacity = '0.6'; }, 1000);
-        }
-    }
-
-    function loadDataFromLocalStorage() {
-        const saved = localStorage.getItem(STORAGE_KEY_DATA);
-        if (saved) {
-            try {
-                return JSON.parse(saved);
-            } catch(e) { return null; }
-        }
-        return null;
-    }
-
-    function saveFiltersToLocalStorage() {
-        localStorage.setItem(STORAGE_KEY_FILTERS, JSON.stringify(currentFilters));
-    }
-
-    function loadFiltersFromLocalStorage() {
-        const saved = localStorage.getItem(STORAGE_KEY_FILTERS);
-        if (saved) {
-            try {
-                return JSON.parse(saved);
-            } catch(e) { return null; }
-        }
-        return null;
-    }
-
-    function migrateOldData() {
-        const oldKeys = ['valveData_v9_inclusive_dates', 'valveData_v9_with_dates', 'valveData_v9', 'valveData_v8'];
-        for (const key of oldKeys) {
-            const oldData = localStorage.getItem(key);
-            if (oldData) {
-                try {
-                    const parsed = JSON.parse(oldData);
-                    if (parsed && Array.isArray(parsed) && parsed.length === 155 && parsed[0].hasOwnProperty('constructionMethod')) {
-                        const migrated = parsed.map(item => ({
-                            ...item,
-                            startDate: item.startDate !== undefined ? item.startDate : "",
-                            endDate: item.endDate !== undefined ? item.endDate : "",
-                            valveStatus: item.valveStatus !== undefined ? item.valveStatus : ""
-                        }));
-                        console.log(`成功从 ${key} 迁移数据`);
-                        return migrated;
-                    }
-                } catch(e) {}
-            }
-        }
-        return null;
-    }
-
-    function ensureDateAndStatusFields(data) {
-        return data.map(item => ({
-            ...item,
-            startDate: item.startDate !== undefined ? item.startDate : "",
-            endDate: item.endDate !== undefined ? item.endDate : "",
-            valveStatus: item.valveStatus !== undefined ? item.valveStatus : ""
-        }));
-    }
+    function saveDataToLocalStorage() { localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(valveData)); const ind = document.getElementById('saveIndicator'); if(ind){ ind.textContent = '💾 已保存'; ind.style.opacity='1'; setTimeout(()=> ind.style.opacity='0.6',1000);} }
+    function loadDataFromLocalStorage() { const saved = localStorage.getItem(STORAGE_KEY_DATA); if(saved) try{ return JSON.parse(saved); }catch(e){ return null; } return null; }
+    function saveFiltersToLocalStorage() { localStorage.setItem(STORAGE_KEY_FILTERS, JSON.stringify(currentFilters)); }
+    function loadFiltersFromLocalStorage() { const saved = localStorage.getItem(STORAGE_KEY_FILTERS); if(saved) try{ return JSON.parse(saved); }catch(e){ return null; } return null; }
+    function ensureDateAndStatusFields(data) { return data.map(item => ({ ...item, startDate: item.startDate!==undefined?item.startDate:"", endDate: item.endDate!==undefined?item.endDate:"", valveStatus: item.valveStatus!==undefined?item.valveStatus:"" })); }
 
     function getFilteredData() {
         return valveData.filter(item => {
@@ -716,7 +660,6 @@
             if (currentFilters.sealType !== 'all' && item.sealType !== currentFilters.sealType) return false;
             if (currentFilters.sealTeam !== 'all' && item.sealTeam !== currentFilters.sealTeam) return false;
             if (currentFilters.statusFilter !== 'all' && item.status !== currentFilters.statusFilter) return false;
-            // 阀门情况筛选
             if (currentFilters.valveStatusFilter !== 'all' && item.valveStatus !== currentFilters.valveStatusFilter) return false;
             if (currentFilters.oldCode && currentFilters.oldCode.trim() !== '') {
                 const keyword = currentFilters.oldCode.trim().toLowerCase();
@@ -729,41 +672,30 @@
 
     function updateStatsAndChart() {
         const filtered = getFilteredData();
-        let notStarted = 0, excavating = 0, excavated = 0, sealing = 0, sealed = 0;
-        filtered.forEach(v => {
-            if (v.status === '未施工') notStarted++;
-            else if (v.status === '开挖中') excavating++;
-            else if (v.status === '开挖完') excavated++;
-            else if (v.status === '封堵中') sealing++;
-            else if (v.status === '封堵完') sealed++;
-        });
-        document.getElementById('notStartedCount').innerText = notStarted;
-        document.getElementById('excavatingCount').innerText = excavating;
-        document.getElementById('excavatedCount').innerText = excavated;
-        document.getElementById('sealingCount').innerText = sealing;
-        document.getElementById('sealedCount').innerText = sealed;
+        let counts = { 未施工:0, 可开挖:0, 开挖中:0, 开挖完:0, 封堵中:0, 封堵完:0 };
+        filtered.forEach(v => { if(counts[v.status] !== undefined) counts[v.status]++; });
+        document.getElementById('notStartedCount').innerText = counts['未施工'];
+        document.getElementById('excavatableCount').innerText = counts['可开挖'];
+        document.getElementById('excavatingCount').innerText = counts['开挖中'];
+        document.getElementById('excavatedCount').innerText = counts['开挖完'];
+        document.getElementById('sealingCount').innerText = counts['封堵中'];
+        document.getElementById('sealedCount').innerText = counts['封堵完'];
         const total = filtered.length;
-        let statusText = currentFilters.statusFilter === 'all' ? '' : `，施工状态：${currentFilters.statusFilter}`;
+        let statusText = currentFilters.statusFilter !== 'all' ? `，施工状态：${currentFilters.statusFilter}` : '';
         let valveStatusText = currentFilters.valveStatusFilter !== 'all' ? `，阀门情况：${currentFilters.valveStatusFilter}` : '';
         let oldCodeText = (currentFilters.oldCode && currentFilters.oldCode.trim() !== '') ? `，老编号匹配：${currentFilters.oldCode}` : '';
         document.getElementById('filterInfo').innerHTML = `当前显示：${total}座${statusText}${valveStatusText}${oldCodeText}`;
-        if (statusChart) {
-            statusChart.data.datasets[0].data = [notStarted, excavating, excavated, sealing, sealed];
-            statusChart.update();
-        } else {
-            const ctx = document.getElementById('statusChart').getContext('2d');
-            statusChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['未施工', '开挖中', '开挖完', '封堵中', '封堵完'],
-                    datasets: [{ data: [notStarted, excavating, excavated, sealing, sealed], backgroundColor: ['#9ca3af', '#f97316', '#fbbf24', '#10b981', '#3b82f6'], borderWidth: 0 }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: true,
-                    plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.raw} 座 (${total ? ((ctx.raw/total)*100).toFixed(1) : 0}%)` } } }
-                }
-            });
-        }
+        const chartData = [counts['未施工'], counts['可开挖'], counts['开挖中'], counts['开挖完'], counts['封堵中'], counts['封堵完']];
+        const ctx = document.getElementById('statusChart').getContext('2d');
+        if (statusChart) statusChart.destroy();
+        statusChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['未施工', '可开挖', '开挖中', '开挖完', '封堵中', '封堵完'],
+                datasets: [{ data: chartData, backgroundColor: ['#9ca3af', '#c084fc', '#f97316', '#fbbf24', '#10b981', '#3b82f6'], borderWidth: 0 }]
+            },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.raw} 座 (${total ? ((ctx.raw/total)*100).toFixed(1) : 0}%)` } } } }
+        });
     }
 
     function createSelect(options, selectedValue, className) {
@@ -785,64 +717,38 @@
         const filtered = getFilteredData();
         filtered.forEach(item => {
             const tr = document.createElement('tr');
-            tr.appendChild(createTd(item.seq));
-            tr.appendChild(createTd(item.newCode));
-            tr.appendChild(createTd(`<span class="old-num">${item.oldCode}</span>`));
-            tr.appendChild(createTd(item.district));
-            tr.appendChild(createTd(item.location));
-            tr.appendChild(createTd(item.pipeMaterial));
-            tr.appendChild(createTd(item.pipeDiameter));
-            tr.appendChild(createTd(item.valveSize));
-            tr.appendChild(createTd(item.valveType));
-            tr.appendChild(createTd(item.team));
+            const addTd = (text) => { const td = document.createElement('td'); td.textContent = text; tr.appendChild(td); };
+            addTd(item.seq); addTd(item.newCode); 
+            const oldTd = document.createElement('td'); oldTd.innerHTML = `<span class="old-num">${item.oldCode}</span>`; tr.appendChild(oldTd);
+            addTd(item.district); addTd(item.location); addTd(item.pipeMaterial); addTd(item.pipeDiameter); addTd(item.valveSize); addTd(item.valveType); addTd(item.team);
             
             const methodTd = document.createElement('td');
             const methodSelect = createSelect(['', '旁通', '联箱'], item.constructionMethod, 'construction-select');
-            methodSelect.addEventListener('change', (e) => {
-                valveData.find(v => v.seq === item.seq).constructionMethod = e.target.value;
-                saveDataToLocalStorage();
-                renderTable(); updateStatsAndChart();
-            });
-            methodTd.appendChild(methodSelect);
-            tr.appendChild(methodTd);
+            methodSelect.addEventListener('change', (e) => { valveData.find(v => v.seq === item.seq).constructionMethod = e.target.value; saveDataToLocalStorage(); renderTable(); updateStatsAndChart(); });
+            methodTd.appendChild(methodSelect); tr.appendChild(methodTd);
             
             const valveStatusTd = document.createElement('td');
             const valveStatusSelect = createSelect(['', '排产', '到货', '打压'], item.valveStatus, 'valve-status-select');
-            valveStatusSelect.addEventListener('change', (e) => {
-                valveData.find(v => v.seq === item.seq).valveStatus = e.target.value;
-                saveDataToLocalStorage();
-                renderTable(); updateStatsAndChart();
-            });
-            valveStatusTd.appendChild(valveStatusSelect);
-            tr.appendChild(valveStatusTd);
+            valveStatusSelect.addEventListener('change', (e) => { valveData.find(v => v.seq === item.seq).valveStatus = e.target.value; saveDataToLocalStorage(); renderTable(); updateStatsAndChart(); });
+            valveStatusTd.appendChild(valveStatusSelect); tr.appendChild(valveStatusTd);
             
             const actuatorTd = document.createElement('td');
             const actuatorSelect = createSelect(['', '排产', '到货'], item.actuatorStatus, 'actuator-select');
-            actuatorSelect.addEventListener('change', (e) => {
-                valveData.find(v => v.seq === item.seq).actuatorStatus = e.target.value;
-                saveDataToLocalStorage();
-                renderTable(); updateStatsAndChart();
-            });
-            actuatorTd.appendChild(actuatorSelect);
-            tr.appendChild(actuatorTd);
+            actuatorSelect.addEventListener('change', (e) => { valveData.find(v => v.seq === item.seq).actuatorStatus = e.target.value; saveDataToLocalStorage(); renderTable(); updateStatsAndChart(); });
+            actuatorTd.appendChild(actuatorSelect); tr.appendChild(actuatorTd);
             
             const consistencyTd = document.createElement('td');
             const consistencySelect = createSelect(['', '是', '否'], item.consistency, 'consistency-select');
-            consistencySelect.addEventListener('change', (e) => {
-                valveData.find(v => v.seq === item.seq).consistency = e.target.value;
-                saveDataToLocalStorage();
-                renderTable(); updateStatsAndChart();
-            });
-            consistencyTd.appendChild(consistencySelect);
-            tr.appendChild(consistencyTd);
+            consistencySelect.addEventListener('change', (e) => { valveData.find(v => v.seq === item.seq).consistency = e.target.value; saveDataToLocalStorage(); renderTable(); updateStatsAndChart(); });
+            consistencyTd.appendChild(consistencySelect); tr.appendChild(consistencyTd);
             
             const statusTd = document.createElement('td');
-            const statusOptions = ['未施工', '开挖中', '开挖完', '封堵中', '封堵完'];
-            const statusSelect = createSelect(statusOptions, item.status, 'status-select');
+            const statusSelect = createSelect(STATUS_LIST, item.status, 'status-select');
             const updateStatusClass = () => {
                 const val = statusSelect.value;
                 let cls = 'status-select';
                 if (val === '未施工') cls += ' not-started';
+                else if (val === '可开挖') cls += ' excavatable';
                 else if (val === '开挖中') cls += ' excavating';
                 else if (val === '开挖完') cls += ' excavated';
                 else if (val === '封堵中') cls += ' sealing';
@@ -858,287 +764,63 @@
                 updateStatsAndChart();
                 saveDataToLocalStorage();
             });
-            statusTd.appendChild(statusSelect);
-            tr.appendChild(statusTd);
+            statusTd.appendChild(statusSelect); tr.appendChild(statusTd);
             
             const sealTd = document.createElement('td');
             const sealSelect = createSelect(['', '单封', '双封', '三封'], item.sealType, 'seal-select');
-            sealSelect.addEventListener('change', (e) => {
-                valveData.find(v => v.seq === item.seq).sealType = e.target.value;
-                renderTable(); updateStatsAndChart(); saveDataToLocalStorage();
-            });
-            sealTd.appendChild(sealSelect);
-            tr.appendChild(sealTd);
+            sealSelect.addEventListener('change', (e) => { valveData.find(v => v.seq === item.seq).sealType = e.target.value; renderTable(); updateStatsAndChart(); saveDataToLocalStorage(); });
+            sealTd.appendChild(sealSelect); tr.appendChild(sealTd);
             
             const teamTd = document.createElement('td');
             const teamSelect = createSelect(['', '金石湾', '新余陆海'], item.sealTeam, 'team-select');
-            teamSelect.addEventListener('change', (e) => {
-                valveData.find(v => v.seq === item.seq).sealTeam = e.target.value;
-                renderTable(); updateStatsAndChart(); saveDataToLocalStorage();
-            });
-            teamTd.appendChild(teamSelect);
-            tr.appendChild(teamTd);
+            teamSelect.addEventListener('change', (e) => { valveData.find(v => v.seq === item.seq).sealTeam = e.target.value; renderTable(); updateStatsAndChart(); saveDataToLocalStorage(); });
+            teamTd.appendChild(teamSelect); tr.appendChild(teamTd);
             
-            const startTd = document.createElement('td');
-            const startInput = document.createElement('input');
-            startInput.type = 'date';
-            startInput.className = 'date-input';
-            startInput.value = item.startDate || '';
-            startInput.addEventListener('change', (e) => {
-                const targetItem = valveData.find(v => v.seq === item.seq);
-                targetItem.startDate = e.target.value;
-                saveDataToLocalStorage();
-                renderTable();
-                updateStatsAndChart();
-            });
-            startTd.appendChild(startInput);
-            tr.appendChild(startTd);
-            
-            const endTd = document.createElement('td');
-            const endInput = document.createElement('input');
-            endInput.type = 'date';
-            endInput.className = 'date-input';
-            endInput.value = item.endDate || '';
-            endInput.addEventListener('change', (e) => {
-                const targetItem = valveData.find(v => v.seq === item.seq);
-                targetItem.endDate = e.target.value;
-                saveDataToLocalStorage();
-                renderTable();
-                updateStatsAndChart();
-            });
-            endTd.appendChild(endInput);
-            tr.appendChild(endTd);
-            
-            const daysTd = document.createElement('td');
-            const days = computeDaysInclusive(item.startDate, item.endDate);
-            let daysText = '—';
-            if (days !== null) {
-                if (days < 0) daysText = `⚠️ ${Math.abs(days)}天(倒置)`;
-                else daysText = `${days}天`;
-            }
-            const daysSpan = document.createElement('span');
-            daysSpan.className = 'days-span';
-            daysSpan.textContent = daysText;
-            daysTd.appendChild(daysSpan);
-            tr.appendChild(daysTd);
-            
+            const startTd = document.createElement('td'); const startInput = document.createElement('input'); startInput.type='date'; startInput.className='date-input'; startInput.value=item.startDate||'';
+            startInput.addEventListener('change', (e) => { valveData.find(v=>v.seq===item.seq).startDate = e.target.value; saveDataToLocalStorage(); renderTable(); updateStatsAndChart(); });
+            startTd.appendChild(startInput); tr.appendChild(startTd);
+            const endTd = document.createElement('td'); const endInput = document.createElement('input'); endInput.type='date'; endInput.className='date-input'; endInput.value=item.endDate||'';
+            endInput.addEventListener('change', (e) => { valveData.find(v=>v.seq===item.seq).endDate = e.target.value; saveDataToLocalStorage(); renderTable(); updateStatsAndChart(); });
+            endTd.appendChild(endInput); tr.appendChild(endTd);
+            const daysTd = document.createElement('td'); const days = computeDaysInclusive(item.startDate, item.endDate); let daysText = '—'; if (days !== null) daysText = days<0? `⚠️ ${Math.abs(days)}天(倒置)` : `${days}天`;
+            const daysSpan = document.createElement('span'); daysSpan.className='days-span'; daysSpan.textContent=daysText; daysTd.appendChild(daysSpan); tr.appendChild(daysTd);
             tbody.appendChild(tr);
         });
     }
 
-    function createTd(content) {
-        const td = document.createElement('td');
-        if (typeof content === 'string' && content.includes('span')) td.innerHTML = content;
-        else td.textContent = content;
-        return td;
-    }
-
-    function refreshDashboard() {
-        renderTable();
-        updateStatsAndChart();
-    }
-
-    function updateTodayDate() {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-        const weekday = weekdays[today.getDay()];
-        const dateElem = document.getElementById('todayDateDisplay');
-        if (dateElem) dateElem.innerHTML = `📅 ${year}年${month}月${day}日 (${weekday})`;
-    }
-
-    function scrollToFirstMatch() {
-        const filtered = getFilteredData();
-        if (filtered.length === 0) { alert('未找到匹配的老编号'); return; }
-        const tbody = document.getElementById('tableBody');
-        const rows = tbody.querySelectorAll('tr');
-        if (rows.length === 0) return;
-        const firstRow = rows[0];
-        if (firstRow) {
-            rows.forEach(row => row.classList.remove('highlight-row'));
-            firstRow.classList.add('highlight-row');
-            firstRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            setTimeout(() => { firstRow.classList.remove('highlight-row'); }, 2000);
-        }
-    }
-
-    function exportData() {
-        const dataStr = JSON.stringify(valveData, null, 2);
-        const blob = new Blob([dataStr], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `valve_data_${new Date().toISOString().slice(0,19)}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-    }
-
-    function importData(file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const imported = JSON.parse(e.target.result);
-                if (imported && Array.isArray(imported) && imported.length === 155 && imported[0].hasOwnProperty('constructionMethod')) {
-                    let withDates = ensureDateAndStatusFields(imported);
-                    valveData = withDates;
-                    saveDataToLocalStorage();
-                    refreshDashboard();
-                    alert('数据导入成功！');
-                } else {
-                    alert('无效的数据文件，请确保文件包含155条完整记录。');
-                }
-            } catch(err) {
-                alert('解析文件失败：' + err.message);
-            }
-        };
-        reader.readAsText(file);
-    }
+    function refreshDashboard() { renderTable(); updateStatsAndChart(); }
+    function updateTodayDate() { const today=new Date(); const year=today.getFullYear(); const month=String(today.getMonth()+1).padStart(2,'0'); const day=String(today.getDate()).padStart(2,'0'); const weekdays=['周日','周一','周二','周三','周四','周五','周六']; const weekday=weekdays[today.getDay()]; const dateElem=document.getElementById('todayDateDisplay'); if(dateElem) dateElem.innerHTML=`📅 ${year}年${month}月${day}日 (${weekday})`; }
+    function scrollToFirstMatch() { const filtered=getFilteredData(); if(filtered.length===0){ alert('未找到匹配的老编号'); return; } const tbody=document.getElementById('tableBody'); const rows=tbody.querySelectorAll('tr'); if(rows.length) rows.forEach(row=>row.classList.remove('highlight-row')); rows[0]?.classList.add('highlight-row'); rows[0]?.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>rows[0]?.classList.remove('highlight-row'),2000); }
+    function exportData() { const dataStr=JSON.stringify(valveData,null,2); const blob=new Blob([dataStr],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`valve_data_${new Date().toISOString().slice(0,19)}.json`; a.click(); URL.revokeObjectURL(url); }
+    function importData(file) { const reader=new FileReader(); reader.onload=(e)=>{ try{ const imported=JSON.parse(e.target.result); if(imported && Array.isArray(imported) && imported.length===155 && imported[0].hasOwnProperty('constructionMethod')){ valveData=ensureDateAndStatusFields(imported); saveDataToLocalStorage(); refreshDashboard(); alert('数据导入成功！'); } else alert('无效的数据文件'); } catch(err){ alert('解析失败'); } }; reader.readAsText(file); }
 
     function bindEvents() {
-        const filterMap = {
-            'filterDistrict':'district', 'filterMaterial':'material', 'filterValveSize':'valveSize',
-            'filterTeam':'team', 'filterConstructionMethod':'constructionMethod',
-            'filterSealType':'sealType', 'filterSealTeam':'sealTeam',
-            'filterValveStatus':'valveStatusFilter'   // 新增映射
-        };
-        for (const [id, key] of Object.entries(filterMap)) {
-            const elem = document.getElementById(id);
-            if (elem) {
-                elem.addEventListener('change', (e) => {
-                    currentFilters[key] = e.target.value;
-                    saveFiltersToLocalStorage();
-                    refreshDashboard();
-                });
-            }
-        }
-
-        document.getElementById('jumpBtn').addEventListener('click', () => {
-            const keyword = document.getElementById('oldCodeInput').value.trim();
-            if (keyword === '') { alert('请输入老编号'); return; }
-            currentFilters.oldCode = keyword;
-            saveFiltersToLocalStorage();
-            refreshDashboard();
-            setTimeout(() => scrollToFirstMatch(), 100);
-        });
-        document.getElementById('clearOldCodeBtn').addEventListener('click', () => {
-            currentFilters.oldCode = '';
-            document.getElementById('oldCodeInput').value = '';
-            saveFiltersToLocalStorage();
-            refreshDashboard();
-        });
-
-        document.getElementById('resetFiltersBtn').addEventListener('click', () => {
-            currentFilters = {
-                district: 'all', material: 'all', valveSize: 'all', team: 'all',
-                constructionMethod: 'all', sealType: 'all', sealTeam: 'all', statusFilter: 'all',
-                valveStatusFilter: 'all', oldCode: ''
-            };
-            saveFiltersToLocalStorage();
-            document.getElementById('filterDistrict').value = 'all';
-            document.getElementById('filterMaterial').value = 'all';
-            document.getElementById('filterValveSize').value = 'all';
-            document.getElementById('filterTeam').value = 'all';
-            document.getElementById('filterConstructionMethod').value = 'all';
-            document.getElementById('filterSealType').value = 'all';
-            document.getElementById('filterSealTeam').value = 'all';
-            document.getElementById('filterValveStatus').value = 'all';
-            document.getElementById('oldCodeInput').value = '';
-            refreshDashboard();
-        });
-
-        document.getElementById('resetAllDataBtn').addEventListener('click', () => {
-            if (confirm("⚠️ 确定要重置所有数据吗？所有手动修改（包括日期、施工状态等）将丢失，恢复到初始状态。")) {
-                valveData = getBaseValveData();
-                saveDataToLocalStorage();
-                currentFilters = {
-                    district: 'all', material: 'all', valveSize: 'all', team: 'all',
-                    constructionMethod: 'all', sealType: 'all', sealTeam: 'all', statusFilter: 'all',
-                    valveStatusFilter: 'all', oldCode: ''
-                };
-                saveFiltersToLocalStorage();
-                document.getElementById('filterDistrict').value = 'all';
-                document.getElementById('filterMaterial').value = 'all';
-                document.getElementById('filterValveSize').value = 'all';
-                document.getElementById('filterTeam').value = 'all';
-                document.getElementById('filterConstructionMethod').value = 'all';
-                document.getElementById('filterSealType').value = 'all';
-                document.getElementById('filterSealTeam').value = 'all';
-                document.getElementById('filterValveStatus').value = 'all';
-                document.getElementById('oldCodeInput').value = '';
-                refreshDashboard();
-            }
-        });
-
-        document.getElementById('exportDataBtn').addEventListener('click', exportData);
-        const importBtn = document.getElementById('importDataBtn');
-        const fileInput = document.getElementById('importFileInput');
-        importBtn.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length) {
-                importData(e.target.files[0]);
-                fileInput.value = '';
-            }
-        });
-
-        const links = document.querySelectorAll('.status-filter-link');
-        links.forEach(link => {
-            link.addEventListener('click', (e) => {
-                const status = link.getAttribute('data-status');
-                currentFilters.statusFilter = (status === 'all') ? 'all' : status;
-                saveFiltersToLocalStorage();
-                refreshDashboard();
-            });
-        });
+        const filterMap={ 'filterDistrict':'district','filterMaterial':'material','filterValveSize':'valveSize','filterTeam':'team','filterConstructionMethod':'constructionMethod','filterSealType':'sealType','filterSealTeam':'sealTeam','filterValveStatus':'valveStatusFilter' };
+        for(const [id,key] of Object.entries(filterMap)){ const elem=document.getElementById(id); if(elem) elem.addEventListener('change',(e)=>{ currentFilters[key]=e.target.value; saveFiltersToLocalStorage(); refreshDashboard(); }); }
+        document.getElementById('jumpBtn').addEventListener('click',()=>{ const keyword=document.getElementById('oldCodeInput').value.trim(); if(keyword===''){ alert('请输入老编号'); return; } currentFilters.oldCode=keyword; saveFiltersToLocalStorage(); refreshDashboard(); setTimeout(()=>scrollToFirstMatch(),100); });
+        document.getElementById('clearOldCodeBtn').addEventListener('click',()=>{ currentFilters.oldCode=''; document.getElementById('oldCodeInput').value=''; saveFiltersToLocalStorage(); refreshDashboard(); });
+        document.getElementById('resetFiltersBtn').addEventListener('click',()=>{ currentFilters={ district:'all',material:'all',valveSize:'all',team:'all',constructionMethod:'all',sealType:'all',sealTeam:'all',statusFilter:'all',valveStatusFilter:'all',oldCode:'' }; saveFiltersToLocalStorage(); document.getElementById('filterDistrict').value='all'; document.getElementById('filterMaterial').value='all'; document.getElementById('filterValveSize').value='all'; document.getElementById('filterTeam').value='all'; document.getElementById('filterConstructionMethod').value='all'; document.getElementById('filterSealType').value='all'; document.getElementById('filterSealTeam').value='all'; document.getElementById('filterValveStatus').value='all'; document.getElementById('oldCodeInput').value=''; refreshDashboard(); });
+        document.getElementById('resetAllDataBtn').addEventListener('click',()=>{ if(confirm("⚠️ 重置所有数据？所有手动修改将丢失。")){ valveData=getBaseValveData(); saveDataToLocalStorage(); currentFilters={ district:'all',material:'all',valveSize:'all',team:'all',constructionMethod:'all',sealType:'all',sealTeam:'all',statusFilter:'all',valveStatusFilter:'all',oldCode:'' }; saveFiltersToLocalStorage(); document.getElementById('filterDistrict').value='all'; document.getElementById('filterMaterial').value='all'; document.getElementById('filterValveSize').value='all'; document.getElementById('filterTeam').value='all'; document.getElementById('filterConstructionMethod').value='all'; document.getElementById('filterSealType').value='all'; document.getElementById('filterSealTeam').value='all'; document.getElementById('filterValveStatus').value='all'; document.getElementById('oldCodeInput').value=''; refreshDashboard(); } });
+        document.getElementById('exportDataBtn').addEventListener('click',exportData); const importBtn=document.getElementById('importDataBtn'); const fileInput=document.getElementById('importFileInput'); importBtn.addEventListener('click',()=>fileInput.click()); fileInput.addEventListener('change',(e)=>{ if(e.target.files.length) { importData(e.target.files[0]); fileInput.value=''; } });
+        const links=document.querySelectorAll('.status-filter-link'); links.forEach(link=>{ link.addEventListener('click',(e)=>{ const status=link.getAttribute('data-status'); currentFilters.statusFilter=(status==='all')?'all':status; saveFiltersToLocalStorage(); refreshDashboard(); }); });
     }
 
     function populateFilters() {
-        const districts = [...new Set(rawData.map(r => r[3]))].sort();
-        const materials = [...new Set(rawData.map(r => r[5].toLowerCase() === 'pe' ? 'PE' : (r[5] === '钢管' ? '钢管' : r[5])))].sort();
-        const valveSizes = [...new Set(rawData.map(r => {
-            let match = r[7].match(/DN\d+/i);
-            return match ? match[0] : r[7];
-        }))].sort((a,b) => (parseInt(a.replace(/\D/g,'')) || 0) - (parseInt(b.replace(/\D/g,'')) || 0));
-        
-        const districtSel = document.getElementById('filterDistrict');
-        districts.forEach(d => { let opt = document.createElement('option'); opt.value = d; opt.textContent = d; districtSel.appendChild(opt); });
-        const materialSel = document.getElementById('filterMaterial');
-        materials.forEach(m => { let opt = document.createElement('option'); opt.value = m; opt.textContent = m; materialSel.appendChild(opt); });
-        const valveSel = document.getElementById('filterValveSize');
-        valveSizes.forEach(vs => { let opt = document.createElement('option'); opt.value = vs; opt.textContent = vs; valveSel.appendChild(opt); });
+        const districts=[...new Set(rawData.map(r=>r[3]))].sort(); const materials=[...new Set(rawData.map(r=>r[5].toLowerCase()==='pe'?'PE':(r[5]==='钢管'?'钢管':r[5])))].sort(); const valveSizes=[...new Set(rawData.map(r=>{ let match=r[7].match(/DN\d+/i); return match?match[0]:r[7]; }))].sort((a,b)=>(parseInt(a.replace(/\D/g,''))||0)-(parseInt(b.replace(/\D/g,''))||0));
+        const districtSel=document.getElementById('filterDistrict'); districts.forEach(d=>{let opt=document.createElement('option'); opt.value=d; opt.textContent=d; districtSel.appendChild(opt);});
+        const materialSel=document.getElementById('filterMaterial'); materials.forEach(m=>{let opt=document.createElement('option'); opt.value=m; opt.textContent=m; materialSel.appendChild(opt);});
+        const valveSel=document.getElementById('filterValveSize'); valveSizes.forEach(vs=>{let opt=document.createElement('option'); opt.value=vs; opt.textContent=vs; valveSel.appendChild(opt);});
     }
 
     function init() {
-        let loadedData = loadDataFromLocalStorage();
-        if (!loadedData) loadedData = migrateOldData();
-        if (loadedData && Array.isArray(loadedData) && loadedData.length === 155) {
-            valveData = ensureDateAndStatusFields(loadedData);
-        } else {
-            valveData = getBaseValveData();
-        }
-        const savedFilters = loadFiltersFromLocalStorage();
-        if (savedFilters) {
-            currentFilters = { ...currentFilters, ...savedFilters };
-        }
+        let loadedData=loadDataFromLocalStorage(); if(!loadedData) loadedData=null;
+        if(loadedData && Array.isArray(loadedData) && loadedData.length===155) valveData=ensureDateAndStatusFields(loadedData);
+        else valveData=getBaseValveData();
+        const savedFilters=loadFiltersFromLocalStorage(); if(savedFilters) currentFilters={...currentFilters,...savedFilters};
         populateFilters();
-        document.getElementById('filterDistrict').value = currentFilters.district;
-        document.getElementById('filterMaterial').value = currentFilters.material;
-        document.getElementById('filterValveSize').value = currentFilters.valveSize;
-        document.getElementById('filterTeam').value = currentFilters.team;
-        document.getElementById('filterConstructionMethod').value = currentFilters.constructionMethod;
-        document.getElementById('filterSealType').value = currentFilters.sealType;
-        document.getElementById('filterSealTeam').value = currentFilters.sealTeam;
-        document.getElementById('filterValveStatus').value = currentFilters.valveStatusFilter;
-        document.getElementById('oldCodeInput').value = currentFilters.oldCode || '';
-        
-        bindEvents();
-        refreshDashboard();
-        updateTodayDate();
-        saveDataToLocalStorage();
-        saveFiltersToLocalStorage();
+        document.getElementById('filterDistrict').value=currentFilters.district; document.getElementById('filterMaterial').value=currentFilters.material; document.getElementById('filterValveSize').value=currentFilters.valveSize; document.getElementById('filterTeam').value=currentFilters.team; document.getElementById('filterConstructionMethod').value=currentFilters.constructionMethod; document.getElementById('filterSealType').value=currentFilters.sealType; document.getElementById('filterSealTeam').value=currentFilters.sealTeam; document.getElementById('filterValveStatus').value=currentFilters.valveStatusFilter; document.getElementById('oldCodeInput').value=currentFilters.oldCode||'';
+        bindEvents(); refreshDashboard(); updateTodayDate(); saveDataToLocalStorage(); saveFiltersToLocalStorage();
     }
-
     init();
 </script>
 </body>
